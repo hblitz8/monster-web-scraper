@@ -82,17 +82,24 @@ func crawl(url string, results *SafeResponseArray) {
 		log.Fatal(err)
 	}
 
-	doc.Find(".indeed-apply-widget").Each(func(i int, s *goquery.Selection) {
-		res := response{}
-		res.Title, _ = s.Attr("data-indeed-apply-jobtitle")
-		res.Location, _ = s.Attr("data-indeed-apply-joblocation")
-		res.Company, _ = s.Attr("data-indeed-apply-jobcompanyname")
-		res.Url, _ = s.Attr("data-indeed-apply-joburl")
-
-		results.mux.Lock()
-		results.array = append(results.array, res)
-		results.mux.Unlock()
+	res := response{}
+	doc.Find(".jobsearch-JobInfoHeader-title").Each(func(i int, s *goquery.Selection) {
+		res.Title = s.Text()
 	})
+
+	doc.Find(".jobsearch-InlineCompanyRating > div:last-child").Each(func(i int, s *goquery.Selection) {
+		// assume the job location is the last div inside .jobsearch-InlineCompanyRating
+		res.Location = s.Text()
+	})
+
+	doc.Find(".jobsearch-CompanyAvatar-companyLink").Each(func(i int, s *goquery.Selection) {
+		res.Company= s.Text()
+	})
+	res.Url = url
+
+	results.mux.Lock()
+	results.array = append(results.array, res)
+	results.mux.Unlock()
 
 }
 
